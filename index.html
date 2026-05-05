@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>弾幕シューティング</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>弾幕シューティング</h1>
+      <p>移動: ←→↑↓ / 射撃: Z / スロー移動: Shift / リスタート: R</p>
+      <canvas id="game" width="480" height="640" aria-label="弾幕シューティングゲーム"></canvas>
+      <div class="hud">
+        <span id="score">SCORE: 0</span>
+        <span id="lives">LIVES: 3</span>
+      </div>
+      <p id="message">ゲーム開始！</p>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>

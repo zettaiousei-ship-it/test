@@ -1,0 +1,35 @@
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif;
+  background: radial-gradient(circle at top, #1d2340, #090b16 70%);
+  color: #f6f8ff;
+}
+
+.container {
+  max-width: 520px;
+  margin: 16px auto;
+  text-align: center;
+}
+
+canvas {
+  width: 100%;
+  border: 2px solid #8fa8ff;
+  background: #05070f;
+  box-shadow: 0 0 24px #5c77ff66;
+}
+
+.hud {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+}
+
+#message {
+  min-height: 1.4em;
+  color: #ffd06b;
+}
