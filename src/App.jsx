@@ -5,28 +5,42 @@ import './styles.css';
 
 const storageKey = 'todo-outlook-planner-tasks';
 const statusOptions = ['未着手', '進行中', '確認待ち', '完了'];
+
+function normalizeTask(task) {
+  return {
+    category: '',
+    supplement: '',
+    ...task,
+  };
+}
 const defaultTasks = [
   {
     id: crypto.randomUUID(),
+    category: '社内',
     name: '週次レポートの下書きを作る',
     dueDate: getRelativeDate(1),
     status: '進行中',
+    supplement: '営業部へ数字確認中',
     issue: '最新の売上データを確認する必要あり',
     calendar: true,
   },
   {
     id: crypto.randomUUID(),
+    category: '顧客対応',
     name: '顧客Aへのフォローアップ',
     dueDate: getRelativeDate(2),
     status: '未着手',
+    supplement: '顧客Aの担当者へ候補日確認',
     issue: '30分の打ち合わせ枠を確保',
     calendar: true,
   },
   {
     id: crypto.randomUUID(),
+    category: '資料',
     name: '完了済み資料の共有',
     dueDate: getRelativeDate(0),
     status: '完了',
+    supplement: '関係者へ送付済み',
     issue: '共有先を最終確認',
     calendar: false,
   },
@@ -45,10 +59,10 @@ function buildOutlookUrl(task) {
   const params = new URLSearchParams({
     path: '/calendar/action/compose',
     rru: 'addevent',
-    subject: task.name,
+    subject: task.category ? `[${task.category}] ${task.name}` : task.name,
     startdt: start.toISOString(),
     enddt: end.toISOString(),
-    body: `進捗状況: ${task.status}\n課題: ${task.issue || 'なし'}`,
+    body: `区分: ${task.category || 'なし'}\n進捗状況: ${task.status}\n補足: ${task.supplement || 'なし'}\n課題: ${task.issue || 'なし'}`,
   });
   return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
 }
@@ -56,12 +70,14 @@ function buildOutlookUrl(task) {
 function App() {
   const [tasks, setTasks] = useState(() => {
     const savedTasks = window.localStorage.getItem(storageKey);
-    return savedTasks ? JSON.parse(savedTasks) : defaultTasks;
+    return savedTasks ? JSON.parse(savedTasks).map(normalizeTask) : defaultTasks.map(normalizeTask);
   });
   const [newTask, setNewTask] = useState({
+    category: '',
     name: '',
     dueDate: getRelativeDate(1),
     status: '未着手',
+    supplement: '',
     issue: '',
     calendar: false,
   });
@@ -89,12 +105,21 @@ function App() {
     if (!newTask.name.trim()) return;
     setTasks((current) => [
       ...current,
-      { ...newTask, id: crypto.randomUUID(), name: newTask.name.trim() },
+      {
+        ...newTask,
+        id: crypto.randomUUID(),
+        category: newTask.category.trim(),
+        name: newTask.name.trim(),
+        supplement: newTask.supplement.trim(),
+        issue: newTask.issue.trim(),
+      },
     ]);
     setNewTask({
+      category: '',
       name: '',
       dueDate: getRelativeDate(1),
       status: '未着手',
+      supplement: '',
       issue: '',
       calendar: false,
     });
@@ -117,7 +142,7 @@ function App() {
           <p className="eyebrow">Todo × Outlook Planner</p>
           <h1>明日やることとOutlook登録予定を、自動で組み立てるタスク表</h1>
           <p className="hero-copy">
-            「タスク名」「納期」「進捗状況」「課題」を入力すると、明日対応すべき項目と
+            「区分」「タスク名」「納期」「進捗状況」「補足」「課題」を入力すると、明日対応すべき項目と
             カレンダー登録すべき予定が右側にまとまります。
           </p>
         </div>
@@ -138,6 +163,14 @@ function App() {
           </div>
 
           <form className="task-form" onSubmit={addTask}>
+            <label>
+              区分
+              <input
+                value={newTask.category}
+                onChange={(event) => setNewTask({ ...newTask, category: event.target.value })}
+                placeholder="例: 社内 / 顧客対応"
+              />
+            </label>
             <label>
               タスク名
               <input
@@ -165,6 +198,14 @@ function App() {
                 ))}
               </select>
             </label>
+            <label>
+              補足
+              <input
+                value={newTask.supplement}
+                onChange={(event) => setNewTask({ ...newTask, supplement: event.target.value })}
+                placeholder="例: 営業部へ確認待ち"
+              />
+            </label>
             <label className="wide-input">
               課題
               <input
@@ -190,9 +231,11 @@ function App() {
             <table>
               <thead>
                 <tr>
+                  <th>区分</th>
                   <th>タスク名</th>
                   <th>納期</th>
                   <th>進捗状況</th>
+                  <th>補足</th>
                   <th>課題</th>
                   <th>Outlook</th>
                   <th aria-label="削除" />
@@ -201,6 +244,13 @@ function App() {
               <tbody>
                 {tasks.map((task) => (
                   <tr key={task.id} className={task.status === '完了' ? 'is-complete' : ''}>
+                    <td>
+                      <input
+                        value={task.category || ''}
+                        onChange={(event) => updateTask(task.id, 'category', event.target.value)}
+                        placeholder="区分"
+                      />
+                    </td>
                     <td>
                       <input
                         value={task.name}
@@ -223,6 +273,13 @@ function App() {
                           <option key={status}>{status}</option>
                         ))}
                       </select>
+                    </td>
+                    <td>
+                      <input
+                        value={task.supplement || ''}
+                        onChange={(event) => updateTask(task.id, 'supplement', event.target.value)}
+                        placeholder="確認先など"
+                      />
                     </td>
                     <td>
                       <input
@@ -265,8 +322,9 @@ function App() {
               <ol className="task-list">
                 {tomorrowTasks.map((task) => (
                   <li key={task.id}>
-                    <strong>{task.name}</strong>
+                    <strong>{task.category ? `[${task.category}] ` : ''}{task.name}</strong>
                     <span>{task.dueDate} / {task.status}</span>
+                    {task.supplement && <small>補足: {task.supplement}</small>}
                     {task.issue && <small>課題: {task.issue}</small>}
                   </li>
                 ))}
@@ -289,8 +347,8 @@ function App() {
                 {calendarTasks.map((task) => (
                   <a key={task.id} href={buildOutlookUrl(task)} target="_blank" rel="noreferrer">
                     <span>
-                      <strong>{task.name}</strong>
-                      <small>{task.dueDate} 09:00-10:00</small>
+                      <strong>{task.category ? `[${task.category}] ` : ''}{task.name}</strong>
+                      <small>{task.dueDate} 09:00-10:00{task.supplement ? ` / ${task.supplement}` : ''}</small>
                     </span>
                     <CalendarPlus size={18} />
                   </a>

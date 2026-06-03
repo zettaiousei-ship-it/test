@@ -131,13 +131,17 @@ button {
 
 .task-form {
   display: grid;
-  grid-template-columns: minmax(200px, 1.3fr) 160px 150px minmax(220px, 1fr) auto auto;
+  grid-template-columns: 140px minmax(220px, 1.2fr) 150px 140px;
   gap: 12px;
   align-items: end;
   margin-bottom: 22px;
   padding: 16px;
   border-radius: 18px;
   background: #f5f8fc;
+}
+
+.wide-input {
+  grid-column: span 2;
 }
 
 label {
@@ -208,7 +212,7 @@ select:focus {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 860px;
+  min-width: 1120px;
 }
 
 th {
